@@ -8,6 +8,17 @@ import { startLocationTracking, stopLocationTracking, getCurrentPosition } from 
 import { getActiveShipment } from "@/services/firestore-service"
 import { useToast } from "@/components/ui/use-toast"
 
+// Extend the Window interface to include the google property
+declare global {
+  interface Window {
+    google: {
+      maps: {
+        Map: new (element: HTMLElement, options: any) => any
+      }
+    }
+  }
+}
+
 interface DriverMapProps {
   driverId: string
 }
@@ -18,7 +29,7 @@ export function DriverMap({ driverId }: DriverMapProps) {
   const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null)
   const [activeShipment, setActiveShipment] = useState<any>(null)
   const mapRef = useRef<HTMLDivElement>(null)
-  const { toast } = useToast()
+  const { addToast } = useToast() // Correctly destructure addToast
 
   useEffect(() => {
     const fetchActiveShipment = async () => {
@@ -45,54 +56,42 @@ export function DriverMap({ driverId }: DriverMapProps) {
     getLocation()
 
     const initMap = () => {
-      if (mapRef.current && currentLocation) {
-        const map = new google.maps.Map(mapRef.current, {
-          center: { lat: currentLocation.latitude, lng: currentLocation.longitude },
-          zoom: 15,
-        });
-       }
-     };
+      if (mapRef.current && window.google) {
+        new window.google.maps.Map(mapRef.current, {
+          center: currentLocation || { lat: 0, lng: 0 },
+          zoom: 8,
+        })
+      }
+    }
+
+    initMap()
 
     return () => {
       if (isTracking) {
         stopLocationTracking()
       }
     }
-  }, [driverId])
+  }, [driverId, currentLocation, isTracking]) // Ensure dependencies are correct
 
   const toggleTracking = () => {
     if (isTracking) {
       stopLocationTracking()
       setIsTracking(false)
-      toast({
-        title: "Location tracking stopped",
-        description: "Your location is no longer being tracked",
-      })
+      addToast("Location tracking stopped. Your location is no longer being tracked.") // Pass a string
     } else {
       const success = startLocationTracking(driverId)
       if (success) {
         setIsTracking(true)
-        toast({
-          title: "Location tracking started",
-          description: "Your location is now being tracked",
-        })
+        addToast("Location tracking started. Your location is now being tracked.") // Pass a string
       } else {
-        toast({
-          title: "Error",
-          description: "Failed to start location tracking",
-          variant: "destructive",
-        })
+        addToast("Error: Failed to start location tracking.") // Pass a string
       }
     }
   }
 
   const openNavigation = () => {
     if (!activeShipment?.destination?.coordinates) {
-      toast({
-        title: "Navigation unavailable",
-        description: "Destination coordinates are not available",
-        variant: "destructive",
-      })
+      addToast("Navigation unavailable: Destination coordinates are not available.") // Pass a string
       return
     }
 
