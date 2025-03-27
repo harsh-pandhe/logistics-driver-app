@@ -33,7 +33,7 @@ interface ShipmentCardProps {
 
 export function ShipmentCard({ shipment, onUpdateStatus }: ShipmentCardProps) {
   const [isUploading, setIsUploading] = useState(false)
-  const { toast } = useToast()
+  const { addToast } = useToast() // Use addToast directly
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -44,18 +44,11 @@ export function ShipmentCard({ shipment, onUpdateStatus }: ShipmentCardProps) {
     try {
       await uploadDeliveryProof(shipment.id, file)
 
-      toast({
-        title: "Proof uploaded",
-        description: "Delivery proof has been uploaded successfully",
-      })
+      addToast("Delivery proof has been uploaded successfully") // Use addToast with a string
 
       onUpdateStatus(shipment.id, "delivered")
     } catch (error: any) {
-      toast({
-        title: "Upload failed",
-        description: error.message || "Failed to upload delivery proof",
-        variant: "destructive",
-      })
+      addToast(error.message || "Failed to upload delivery proof") // Use addToast with a string
     } finally {
       setIsUploading(false)
     }
@@ -101,6 +94,8 @@ export function ShipmentCard({ shipment, onUpdateStatus }: ShipmentCardProps) {
                 className="absolute inset-0 opacity-0 cursor-pointer"
                 onChange={handleFileUpload}
                 disabled={isUploading}
+                title="Upload delivery proof"
+                aria-label="Upload delivery proof"
               />
               {isUploading ? (
                 <>
