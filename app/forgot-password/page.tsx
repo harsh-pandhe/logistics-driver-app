@@ -10,14 +10,15 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, ArrowLeft } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
-import { auth } from "@/firebase-config"
-import { sendPasswordResetEmail } from "firebase/auth"
+import { getAuth, sendPasswordResetEmail } from "firebase/auth" // Ensure correct imports
+
+const auth = getAuth() // Explicitly initialize auth with proper type
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
+  const { addToast: toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [isEmailSent, setIsEmailSent] = useState(false)
-  const { toast } = useToast()
+  const [email, setEmail] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,22 +27,15 @@ export default function ForgotPasswordPage() {
     try {
       await sendPasswordResetEmail(auth, email)
       setIsEmailSent(true)
-      toast({
-        title: "Reset email sent",
-        description: "Check your email for a password reset link",
-      })
+      toast("Password reset email sent successfully")
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send reset email",
-        variant: "destructive",
-      })
+      toast(error.message || "Failed to send reset email")
     } finally {
       setIsLoading(false)
     }
   }
-
-  return (
+  
+    return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
